@@ -196,7 +196,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* 시각화 영역 (실린더 OR 마시멜로) - overflow-visible 적용으로 피스톤 안 잘림 */}
+                  {/* 시각화 영역 (실린더 OR 마시멜로) */}
                   {boyleMode === 'cylinder' ? (
                     <div className="relative w-32 h-64 border-4 border-t-0 border-slate-700 rounded-b-lg bg-white mt-16 shadow-inner overflow-visible">
                       {/* 가스 영역 */}
@@ -356,7 +356,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 보일의 법칙 과학 원리 정리 추가 */}
+              {/* 보일의 법칙 과학 원리 정리 */}
               <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-5 shadow-sm mt-4">
                 <h3 className="text-lg font-bold text-indigo-900 mb-3">📝 핵심 과학 원리 정리 (보일의 법칙)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -377,6 +377,7 @@ export default function App() {
                   </div>
                 </div>
               </div>
+
             </div>
           )}
 
@@ -507,20 +508,20 @@ export default function App() {
                     </div>
                   )}
               
-              {/* 가열/냉각 상태 표시 (버너 시각화) */}
-              <div className="mt-4 flex flex-col items-center">
-                <div className="text-4xl transition-transform duration-300 transform origin-bottom" style={{ transform: `scale(${charlesTemp / 300})` }}>
-                  {charlesTemp >= 400 ? '🔥' : charlesTemp <= 200 ? '🧊' : '🕯️'}
+                  {/* 가열/냉각 상태 표시 (버너 시각화) */}
+                  <div className="mt-4 flex flex-col items-center">
+                    <div className="text-4xl transition-transform duration-300 transform origin-bottom" style={{ transform: `scale(${charlesTemp / 300})` }}>
+                      {charlesTemp >= 400 ? '🔥' : charlesTemp <= 200 ? '🧊' : '🕯️'}
+                    </div>
+                    <div className="mt-1 text-center text-sm font-bold">
+                      {charlesTemp >= 400 ? <span className="text-red-500">가열 중 (운동 활발)</span> : 
+                       charlesTemp <= 200 ? <span className="text-blue-500">냉각 중 (운동 둔화)</span> : 
+                       <span className="text-orange-500">온도 유지</span>}
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-1 text-center text-sm font-bold">
-                  {charlesTemp >= 400 ? <span className="text-red-500">가열 중 (운동 활발)</span> : 
-                   charlesTemp <= 200 ? <span className="text-blue-500">냉각 중 (운동 둔화)</span> : 
-                   <span className="text-orange-500">온도 유지</span>}
-                </div>
-              </div>
-            </div>
 
-            {/* 오른쪽: 그래프 */}
+                {/* 오른쪽: 그래프 */}
                 <div className="flex-1 w-full bg-white p-5 border border-gray-200 rounded-xl shadow-sm flex flex-col mt-4 md:mt-0">
                   <h3 className="text-center font-bold text-gray-700 mb-4">V-T 그래프 (부피와 온도의 비례 관계)</h3>
                   <div className="relative w-full aspect-[4/3] bg-slate-50 border-l-2 border-b-2 border-slate-700 flex-1">
@@ -595,7 +596,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 샤를의 법칙 과학 원리 정리 추가 */}
+              {/* 샤를의 법칙 과학 원리 정리 */}
               <div className="bg-rose-50 border border-rose-100 rounded-xl p-5 shadow-sm mt-4">
                 <h3 className="text-lg font-bold text-rose-900 mb-3">📝 핵심 과학 원리 정리 (샤를의 법칙)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -616,6 +617,7 @@ export default function App() {
                   </div>
                 </div>
               </div>
+
             </div>
           )}
         </div>
