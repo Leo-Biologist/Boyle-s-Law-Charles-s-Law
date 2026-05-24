@@ -1,627 +1,655 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>기체 법칙 가상 실험실</title>
+  
+  <!-- Tailwind CSS (스타일링) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & ReactDOM (리액트 코어) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel (브라우저에서 JSX를 컴파일하기 위함) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
 
-// --- 입자 애니메이션 시각화 컴포넌트 ---
-const ParticleCanvas = ({ containerWidth, containerHeight, volume, maxVolume, temperature, color }) => {
-  const canvasRef = useRef(null);
-  const particles = useRef([]);
+  <script type="text/babel">
+    const { useState, useMemo, useEffect, useRef } = React;
 
-  useEffect(() => {
-    // 40개의 기체 입자를 처음 한 번만 무작위 위치/속도로 생성합니다.
-    particles.current = Array.from({ length: 40 }).map(() => ({
-      x: 10 + Math.random() * (containerWidth - 20),
-      y: 10 + Math.random() * ((volume / maxVolume * containerHeight) - 20),
-      vx: (Math.random() - 0.5) * 4,
-      vy: (Math.random() - 0.5) * 4,
-    }));
-  }, [containerWidth, containerHeight]); 
+    // --- 입자 애니메이션 시각화 컴포넌트 ---
+    const ParticleCanvas = ({ containerWidth, containerHeight, volume, maxVolume, temperature, color }) => {
+      const canvasRef = useRef(null);
+      const particles = useRef([]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    let animationFrameId;
+      useEffect(() => {
+        // 40개의 기체 입자를 처음 한 번만 무작위 위치/속도로 생성합니다.
+        particles.current = Array.from({ length: 40 }).map(() => ({
+          x: 10 + Math.random() * (containerWidth - 20),
+          y: 10 + Math.random() * ((volume / maxVolume * containerHeight) - 20),
+          vx: (Math.random() - 0.5) * 4,
+          vy: (Math.random() - 0.5) * 4,
+        }));
+      }, [containerWidth, containerHeight]); 
 
-    const render = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const currentHeight = (volume / maxVolume) * containerHeight;
-      
-      // 샤를의 법칙: 온도에 따른 입자 속도 변화 (절대온도의 제곱근에 비례)
-      const speedMultiplier = Math.sqrt(temperature / 300);
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        let animationFrameId;
 
-      particles.current.forEach(p => {
-        p.x += p.vx * speedMultiplier;
-        p.y += p.vy * speedMultiplier;
+        const render = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          const currentHeight = (volume / maxVolume) * containerHeight;
+          
+          // 샤를의 법칙: 온도에 따른 입자 속도 변화 (절대온도의 제곱근에 비례)
+          const speedMultiplier = Math.sqrt(temperature / 300);
 
-        // 벽면 충돌 처리 (x축)
-        if (p.x <= 5 || p.x >= containerWidth - 5) {
-          p.vx *= -1;
-          p.x = p.x <= 5 ? 5 : containerWidth - 5;
-        }
-        // 천장(피스톤) 및 바닥 충돌 처리 (y축)
-        if (p.y <= 5 || p.y >= currentHeight - 5) {
-          p.vy *= -1;
-          p.y = p.y <= 5 ? 5 : currentHeight - 5;
-        }
+          particles.current.forEach(p => {
+            p.x += p.vx * speedMultiplier;
+            p.y += p.vy * speedMultiplier;
 
-        // 보일의 법칙: 부피가 급격히 줄어들 때 입자가 피스톤에 밀려 내려옴
-        if (p.y > currentHeight - 5) p.y = currentHeight - 5;
+            // 벽면 충돌 처리 (x축)
+            if (p.x <= 5 || p.x >= containerWidth - 5) {
+              p.vx *= -1;
+              p.x = p.x <= 5 ? 5 : containerWidth - 5;
+            }
+            // 천장(피스톤) 및 바닥 충돌 처리 (y축)
+            if (p.y <= 5 || p.y >= currentHeight - 5) {
+              p.vy *= -1;
+              p.y = p.y <= 5 ? 5 : currentHeight - 5;
+            }
 
-        // 동그란 기체 입자 그리기
-        ctx.beginPath();
-        ctx.arc(p.x, containerHeight - p.y, 4, 0, 2 * Math.PI);
-        ctx.fillStyle = color;
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      });
+            // 보일의 법칙: 부피가 급격히 줄어들 때 입자가 피스톤에 밀려 내려옴
+            if (p.y > currentHeight - 5) p.y = currentHeight - 5;
 
-      animationFrameId = requestAnimationFrame(render);
+            // 동그란 기체 입자 그리기
+            ctx.beginPath();
+            ctx.arc(p.x, containerHeight - p.y, 4, 0, 2 * Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          });
+
+          animationFrameId = requestAnimationFrame(render);
+        };
+        render();
+
+        return () => cancelAnimationFrame(animationFrameId);
+      }, [volume, maxVolume, temperature, containerWidth, containerHeight, color]);
+
+      return <canvas ref={canvasRef} width={containerWidth} height={containerHeight} className="absolute bottom-0 left-0 pointer-events-none z-0 opacity-80 rounded-b-sm" />;
     };
-    render();
 
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [volume, maxVolume, temperature, containerWidth, containerHeight, color]);
+    function App() {
+      const [activeTab, setActiveTab] = useState('boyle');
 
-  return <canvas ref={canvasRef} width={containerWidth} height={containerHeight} className="absolute bottom-0 left-0 pointer-events-none z-0 opacity-80 rounded-b-sm" />;
-};
+      // --- 보일의 법칙 상태 ---
+      const [boyleVolume, setBoyleVolume] = useState(10);
+      const boyleK = 20; // P * V = 20 (상수)
+      const boylePressure = boyleK / boyleVolume;
+      const [boyleRecords, setBoyleRecords] = useState([]);
+      const [boyleMode, setBoyleMode] = useState('cylinder'); 
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState('boyle');
+      // --- 샤를의 법칙 상태 ---
+      const [charlesTemp, setCharlesTemp] = useState(300);
+      const charlesK = 20 / 600; // V / T = k (상수)
+      const charlesVolume = charlesK * charlesTemp;
+      const [charlesRecords, setCharlesRecords] = useState([]);
+      const [charlesMode, setCharlesMode] = useState('cylinder');
 
-  // --- 보일의 법칙 상태 ---
-  const [boyleVolume, setBoyleVolume] = useState(10);
-  const boyleK = 20; // P * V = 20 (상수)
-  const boylePressure = boyleK / boyleVolume;
-  const [boyleRecords, setBoyleRecords] = useState([]);
-  const [boyleMode, setBoyleMode] = useState('cylinder'); 
+      // 보일의 법칙 그래프 경로 생성
+      const boylePath = useMemo(() => {
+        let path = '';
+        for (let v = 2; v <= 20; v += 0.5) {
+          const p = boyleK / v;
+          const x = (v / 20) * 300;
+          const y = 200 - (p / 10) * 200;
+          if (v === 2) path += `M ${x} ${y} `;
+          else path += `L ${x} ${y} `;
+        }
+        return path;
+      }, []);
 
-  // --- 샤를의 법칙 상태 ---
-  const [charlesTemp, setCharlesTemp] = useState(300);
-  const charlesK = 20 / 600; // V / T = k (상수)
-  const charlesVolume = charlesK * charlesTemp;
-  const [charlesRecords, setCharlesRecords] = useState([]);
-  const [charlesMode, setCharlesMode] = useState('cylinder');
+      // --- 핸들러 함수 ---
+      const recordBoyleData = () => {
+        if (boyleRecords.length >= 5) return;
+        setBoyleRecords([...boyleRecords, { v: boyleVolume, p: boylePressure, k: boylePressure * boyleVolume }]);
+      };
 
-  // 보일의 법칙 그래프 경로 생성
-  const boylePath = useMemo(() => {
-    let path = '';
-    for (let v = 2; v <= 20; v += 0.5) {
-      const p = boyleK / v;
-      const x = (v / 20) * 300;
-      const y = 200 - (p / 10) * 200;
-      if (v === 2) path += `M ${x} ${y} `;
-      else path += `L ${x} ${y} `;
-    }
-    return path;
-  }, []);
+      const recordCharlesData = () => {
+        if (charlesRecords.length >= 5) return;
+        setCharlesRecords([...charlesRecords, { t: charlesTemp, v: charlesVolume, k: charlesVolume / charlesTemp }]);
+      };
 
-  // --- 핸들러 함수 ---
-  const recordBoyleData = () => {
-    if (boyleRecords.length >= 5) return;
-    setBoyleRecords([...boyleRecords, { v: boyleVolume, p: boylePressure, k: boylePressure * boyleVolume }]);
-  };
+      const resetBoyle = () => {
+        setBoyleVolume(10);
+        setBoyleRecords([]);
+      };
 
-  const recordCharlesData = () => {
-    if (charlesRecords.length >= 5) return;
-    setCharlesRecords([...charlesRecords, { t: charlesTemp, v: charlesVolume, k: charlesVolume / charlesTemp }]);
-  };
+      const resetCharles = () => {
+        setCharlesTemp(300);
+        setCharlesRecords([]);
+      };
 
-  const resetBoyle = () => {
-    setBoyleVolume(10);
-    setBoyleRecords([]);
-  };
-
-  const resetCharles = () => {
-    setCharlesTemp(300);
-    setCharlesRecords([]);
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sans text-gray-800">
-      <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
-        {/* Header */}
-        <div className="bg-slate-800 p-6 text-white text-center relative">
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">🧪 기체 법칙 가상 실험실</h1>
-          <p className="mt-2 text-slate-300">기체 입자의 운동 모형을 통해 보일의 법칙과 샤를의 법칙을 확인해 보세요.</p>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex border-b">
-          <button
-            className={`flex-1 py-4 text-lg font-bold transition-colors ${
-              activeTab === 'boyle' ? 'text-blue-600 border-b-4 border-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-50'
-            }`}
-            onClick={() => setActiveTab('boyle')}
-          >
-            보일의 법칙
-          </button>
-          <button
-            className={`flex-1 py-4 text-lg font-bold transition-colors ${
-              activeTab === 'charles' ? 'text-orange-600 border-b-4 border-orange-600 bg-orange-50' : 'text-gray-500 hover:bg-gray-50'
-            }`}
-            onClick={() => setActiveTab('charles')}
-          >
-            샤를의 법칙
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 md:p-8">
-          {/* ================= BOYLE'S LAW ================= */}
-          {activeTab === 'boyle' && (
-            <div className="space-y-8">
-              <div className="flex flex-col md:flex-row gap-8">
-                {/* 왼쪽: 컨트롤 및 실린더 */}
-                <div className="flex-1 flex flex-col items-center">
-                  <div className="w-full bg-blue-50 p-5 rounded-xl border border-blue-100 mb-6 shadow-sm">
-                    <div className="flex justify-between items-center mb-2">
-                      <h2 className="text-lg font-bold text-blue-800">📌 통제 변인: 온도(T) 일정</h2>
-                      <button onClick={resetBoyle} className="text-sm px-3 py-1 bg-white border border-blue-300 text-blue-600 rounded-md hover:bg-blue-100">초기화</button>
-                    </div>
-                    
-                    {/* 모드 선택 토글 */}
-                    <div className="flex bg-blue-200/50 p-1 rounded-lg mb-4">
-                      <button 
-                        onClick={() => setBoyleMode('cylinder')}
-                        className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-colors ${boyleMode === 'cylinder' ? 'bg-white text-blue-600 shadow-sm' : 'text-blue-700/60 hover:text-blue-700'}`}
-                      >
-                        기본 실린더 모형
-                      </button>
-                      <button 
-                        onClick={() => setBoyleMode('marshmallow')}
-                        className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-colors ${boyleMode === 'marshmallow' ? 'bg-white text-blue-600 shadow-sm' : 'text-blue-700/60 hover:text-blue-700'}`}
-                      >
-                        🍡 주사기 마시멜로
-                      </button>
-                    </div>
-
-                    <div className="bg-white p-3 rounded-lg border border-blue-200 text-sm text-blue-700 mb-4 font-bold shadow-sm">
-                      {boyleMode === 'cylinder' 
-                        ? "💡 원리: 기체의 부피가 감소하면 입자의 단위 넓이당 충돌 횟수가 증가하여 압력이 높아집니다."
-                        : "💡 생활 속 원리: 끝을 막은 주사기를 누르면(부피 감소→압력 증가) 마시멜로가 쪼그라들고, 당기면(부피 증가→압력 감소) 빵빵하게 부풀어 오릅니다."}
-                    </div>
-                    
-                    <label className="block text-sm font-medium text-gray-700 mt-4 mb-2">
-                      주사기 부피(V) 조절: <span className="text-blue-600 font-bold text-lg">{boyleVolume.toFixed(1)} L</span>
-                    </label>
-                    <input
-                      type="range" min="2" max="20" step="0.1" value={boyleVolume}
-                      onChange={(e) => setBoyleVolume(parseFloat(e.target.value))}
-                      className="w-full h-3 bg-blue-200 rounded-lg appearance-none cursor-pointer"
-                    />
-                    
-                    <div className="mt-5 p-3 bg-white rounded-lg border border-blue-200 text-center flex justify-center items-center gap-4">
-                      <span className="text-gray-600 text-sm">내부 압력(P):</span>
-                      <span className="text-red-500 font-black text-xl">{boylePressure.toFixed(2)} 기압</span>
-                    </div>
-                  </div>
-
-                  {/* 시각화 영역 (실린더 OR 마시멜로) */}
-                  {boyleMode === 'cylinder' ? (
-                    <div className="relative w-32 h-64 border-4 border-t-0 border-slate-700 rounded-b-lg bg-white mt-16 shadow-inner overflow-visible">
-                      {/* 가스 영역 */}
-                      <div 
-                        className="absolute bottom-0 w-full bg-blue-50 rounded-b-sm transition-all duration-75 ease-linear border-t-2 border-blue-400 z-0"
-                        style={{ height: `${(boyleVolume / 20) * 100}%` }}
-                      />
-                      
-                      {/* 실감나는 입자 캔버스 추가 */}
-                      <ParticleCanvas containerWidth={120} containerHeight={248} volume={boyleVolume} maxVolume={20} temperature={300} color="#3b82f6" />
-                      
-                      {/* 피스톤 */}
-                      <div 
-                        className="absolute w-full h-4 bg-slate-600 transition-all duration-75 ease-linear z-10 flex justify-center"
-                        style={{ bottom: `${(boyleVolume / 20) * 100}%`, transform: 'translateY(50%)' }}
-                      >
-                        {/* 뚜렷한 피스톤 기둥 추가 */}
-                        <div className="absolute bottom-0 w-4 h-48 bg-slate-300 border-x-2 border-t-2 border-slate-400 rounded-t-sm z-0"></div>
-
-                        {/* 압력 추 시각화 (진짜 '추' 모양으로 강조) */}
-                        <div 
-                          className="absolute bottom-full mb-0 bg-zinc-700 transition-all duration-75 ease-linear flex flex-col items-center justify-center text-white text-[12px] font-bold rounded-t-md border-2 border-zinc-800 z-20 shadow-lg"
-                          style={{ width: '75%', height: `${Math.max(30, boylePressure * 25)}px` }}
-                        >
-                          <span className="text-zinc-300 text-[10px]">
-                            {boylePressure < 2 ? '가벼운 추' : boylePressure < 5 ? '무거운 추' : '매우 무거운 추'}
-                          </span>
-                          <span>{boylePressure.toFixed(1)} 기압</span>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="relative w-32 h-64 border-4 border-t-0 border-slate-300 rounded-b-md bg-white/50 mt-16 shadow-inner flex flex-col items-center justify-end overflow-visible">
-                      {/* 눈금선 시각화 */}
-                      <div className="absolute left-0 top-0 h-full w-4 border-r border-slate-200 flex flex-col justify-between py-4 z-0">
-                         {[...Array(8)].map((_, i) => <div key={i} className="w-2 h-[2px] bg-slate-300"></div>)}
-                      </div>
-                      
-                      {/* 누르는 피스톤 (위에서 아래로 길게 내려옴) */}
-                      <div 
-                        className="absolute w-full bg-slate-700 transition-all duration-75 ease-linear z-20 flex justify-center border-b-4 border-slate-800 opacity-90"
-                        style={{ height: '300px', bottom: `${(boyleVolume / 20) * 100}%` }}
-                      >
-                         {/* 피스톤 기둥 */}
-                         <div className="w-4 h-full bg-slate-400"></div>
-                      </div>
-                      
-                      {/* 막힌 주사기 입구 */}
-                      <div className="absolute -bottom-2 w-8 h-4 bg-slate-800 rounded-full z-30"></div>
-
-                      {/* 핑크색 마시멜로 SVG */}
-                      <div 
-                        className="absolute z-10 transition-all duration-75 origin-bottom flex flex-col items-center" 
-                        style={{ bottom: '10%', transform: `scale(${boyleVolume / 10})` }}
-                      >
-                        <svg width="60" height="60" viewBox="0 0 100 100" className="drop-shadow-md">
-                           <rect x="20" y="20" width="60" height="60" rx="20" fill="#fbcfe8" stroke="#f472b6" strokeWidth="4"/>
-                           
-                           {/* 부피에 따른 귀여운 표정 변화 */}
-                           {boyleVolume < 6 ? ( // 압력이 셀 때 (쪼그라듦)
-                             <>
-                               <path d="M 35 45 L 45 55 M 45 45 L 35 55" stroke="#be185d" strokeWidth="4" strokeLinecap="round"/>
-                               <path d="M 55 45 L 65 55 M 65 45 L 55 55" stroke="#be185d" strokeWidth="4" strokeLinecap="round"/>
-                               <path d="M 45 70 Q 50 60 55 70" fill="none" stroke="#be185d" strokeWidth="4" strokeLinecap="round"/>
-                             </>
-                           ) : boyleVolume > 15 ? ( // 압력이 약할 때 (빵빵해짐)
-                             <>
-                               <circle cx="40" cy="45" r="5" fill="#be185d"/>
-                               <circle cx="60" cy="45" r="5" fill="#be185d"/>
-                               <ellipse cx="50" cy="65" rx="8" ry="12" fill="#be185d"/>
-                             </>
-                           ) : ( // 평상시
-                             <>
-                               <circle cx="40" cy="45" r="4" fill="#be185d"/>
-                               <circle cx="60" cy="45" r="4" fill="#be185d"/>
-                               <path d="M 45 65 Q 50 72 55 65" fill="none" stroke="#be185d" strokeWidth="4" strokeLinecap="round"/>
-                             </>
-                           )}
-                        </svg>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 오른쪽: 그래프 */}
-                <div className="flex-1 w-full bg-white p-5 border border-gray-200 rounded-xl shadow-sm flex flex-col mt-4 md:mt-0">
-                  <h3 className="text-center font-bold text-gray-700 mb-4">P-V 그래프 (압력과 부피의 반비례 관계)</h3>
-                  <div className="relative w-full aspect-[4/3] bg-slate-50 border-l-2 border-b-2 border-slate-700 flex-1">
-                    <svg viewBox="0 0 300 200" className="w-full h-full overflow-visible">
-                      {[1, 2, 3, 4].map(i => <line key={`h${i}`} x1="0" y1={i*50} x2="300" y2={i*50} stroke="#e2e8f0" strokeWidth="1" />)}
-                      {[1, 2, 3, 4, 5].map(i => <line key={`v${i}`} x1={i*50} y1="0" x2={i*50} y2="200" stroke="#e2e8f0" strokeWidth="1" />)}
-                      
-                      {/* 반비례 곡선 */}
-                      <path d={boylePath} fill="none" stroke="#3b82f6" strokeWidth="3" opacity="0.4" />
-                      
-                      {/* 현재 위치 점 */}
-                      <circle 
-                        cx={(boyleVolume / 20) * 300} cy={200 - (boylePressure / 10) * 200} 
-                        r="7" fill="#ef4444" stroke="white" strokeWidth="2"
-                        className="transition-all duration-75"
-                      />
-                    </svg>
-                    
-                    {/* 축 라벨 */}
-                    <div className="absolute -left-8 top-0 bottom-0 flex flex-col justify-between text-xs text-gray-500 py-1">
-                      <span>10</span><span>5</span><span>0</span>
-                    </div>
-                    <div className="absolute left-0 right-0 -bottom-6 flex justify-between text-xs text-gray-500 px-1">
-                      <span>0</span><span>10</span><span>20</span>
-                    </div>
-                    <div className="absolute -left-12 top-1/2 -rotate-90 text-sm font-bold text-slate-600">압력 (P)</div>
-                    <div className="absolute left-1/2 -bottom-10 -translate-x-1/2 text-sm font-bold text-slate-600">부피 (V)</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 하단: 데이터 기록 표 및 수식 */}
-              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-                <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                  <div className="bg-blue-50 px-4 py-2 rounded-lg font-mono text-lg text-blue-800 border border-blue-200">
-                    압력 × 부피 = <span className="font-bold">{(boylePressure * boyleVolume).toFixed(1)}</span> (일정)
-                  </div>
-                  <button 
-                    onClick={recordBoyleData}
-                    disabled={boyleRecords.length >= 5}
-                    className="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg shadow hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                  >
-                    + 현재 데이터 기록하기
-                  </button>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-center border-collapse">
-                    <thead>
-                      <tr className="bg-slate-100 text-slate-700">
-                        <th className="p-3 border">실험 횟수</th>
-                        <th className="p-3 border">압력 (P)</th>
-                        <th className="p-3 border">부피 (V)</th>
-                        <th className="p-3 border bg-blue-100">압력 × 부피 (상수 k)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {boyleRecords.length === 0 ? (
-                        <tr><td colSpan="4" className="p-4 text-gray-400">데이터 기록하기 버튼을 눌러보세요. (최대 5개)</td></tr>
-                      ) : (
-                        boyleRecords.map((data, idx) => (
-                          <tr key={idx} className="hover:bg-gray-50">
-                            <td className="p-2 border font-bold">{idx + 1}</td>
-                            <td className="p-2 border">{data.p.toFixed(2)} 기압</td>
-                            <td className="p-2 border">{data.v.toFixed(1)} L</td>
-                            <td className="p-2 border bg-blue-50 font-bold text-blue-600">{data.k.toFixed(1)}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* 보일의 법칙 과학 원리 정리 */}
-              <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-5 shadow-sm mt-4">
-                <h3 className="text-lg font-bold text-indigo-900 mb-3">📝 핵심 과학 원리 정리 (보일의 법칙)</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-indigo-800 leading-relaxed text-sm mb-2">
-                      <span className="font-bold">✔ 정의:</span> 온도가 일정할 때, 일정량의 기체의 부피는 압력에 <strong className="text-red-600 bg-red-100 px-1 rounded">반비례</strong>합니다.
-                    </p>
-                    <p className="text-indigo-800 leading-relaxed text-sm">
-                      <span className="font-bold">✔ 입자 모형의 원리:</span> 외부에서 압력을 가해 부피를 줄이면 공간이 좁아집니다. 기체 입자들이 벽에 부딪히는 <strong>충돌 횟수가 증가</strong>하여 내부 압력이 커집니다.
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-center bg-white rounded-lg p-3 border border-indigo-200">
-                    <div className="text-center">
-                      <span className="block text-xs text-gray-500 mb-1">공식</span>
-                      <span className="text-xl font-black text-indigo-700">P × V = 일정</span>
-                      <span className="block text-xs text-gray-500 mt-1">(압력 × 부피 = 상수)</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
+      return (
+        <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sans text-gray-800">
+          <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+            {/* Header */}
+            <div className="bg-slate-800 p-6 text-white text-center relative">
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">🧪 기체 법칙 가상 실험실</h1>
+              <p className="mt-2 text-slate-300">기체 입자의 운동 모형을 통해 보일의 법칙과 샤를의 법칙을 확인해 보세요.</p>
             </div>
-          )}
 
-          {/* ================= CHARLES'S LAW ================= */}
-          {activeTab === 'charles' && (
-            <div className="space-y-8">
-              <div className="flex flex-col md:flex-row gap-8">
-                {/* 왼쪽: 컨트롤 및 실린더 */}
-                <div className="flex-1 flex flex-col items-center">
-                  <div className="w-full bg-orange-50 p-5 rounded-xl border border-orange-100 mb-6 shadow-sm">
-                     <div className="flex justify-between items-center mb-2">
-                      <h2 className="text-lg font-bold text-orange-800">📌 통제 변인: 압력(P) 일정</h2>
-                      <button onClick={resetCharles} className="text-sm px-3 py-1 bg-white border border-orange-300 text-orange-600 rounded-md hover:bg-orange-100">초기화</button>
-                    </div>
-                    
-                    {/* 모드 선택 토글 */}
-                    <div className="flex bg-orange-200/50 p-1 rounded-lg mb-4">
-                      <button 
-                        onClick={() => setCharlesMode('cylinder')}
-                        className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-colors ${charlesMode === 'cylinder' ? 'bg-white text-orange-600 shadow-sm' : 'text-orange-700/60 hover:text-orange-700'}`}
-                      >
-                        기본 실린더 모형
-                      </button>
-                      <button 
-                        onClick={() => setCharlesMode('pingpong')}
-                        className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-colors ${charlesMode === 'pingpong' ? 'bg-white text-orange-600 shadow-sm' : 'text-orange-700/60 hover:text-orange-700'}`}
-                      >
-                        🏓 탁구공 실험
-                      </button>
-                    </div>
+            {/* Tabs */}
+            <div className="flex border-b">
+              <button
+                className={`flex-1 py-4 text-lg font-bold transition-colors ${
+                  activeTab === 'boyle' ? 'text-blue-600 border-b-4 border-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-50'
+                }`}
+                onClick={() => setActiveTab('boyle')}
+              >
+                보일의 법칙
+              </button>
+              <button
+                className={`flex-1 py-4 text-lg font-bold transition-colors ${
+                  activeTab === 'charles' ? 'text-orange-600 border-b-4 border-orange-600 bg-orange-50' : 'text-gray-500 hover:bg-gray-50'
+                }`}
+                onClick={() => setActiveTab('charles')}
+              >
+                샤를의 법칙
+              </button>
+            </div>
 
-                    <div className="bg-white p-3 rounded-lg border border-orange-200 text-sm text-orange-700 mb-4 font-bold shadow-sm">
-                      {charlesMode === 'cylinder' 
-                        ? "💡 원리: 온도가 높아지면 기체 입자의 운동이 활발해져 부피가 팽창합니다."
-                        : "💡 생활 속 원리: 찌그러진 탁구공을 뜨거운 물에 넣으면, 탁구공 안의 기체 온도가 올라가면서 부피가 팽창하여 원래대로 둥글게 펴집니다."}
-                    </div>
-                    
-                    <label className="block text-sm font-medium text-gray-700 mt-4 mb-2">
-                      절대온도(T) 조절: <span className="text-orange-600 font-bold text-lg">{charlesTemp.toFixed(0)} K</span>
-                    </label>
-                    <input
-                      type="range" min="100" max="600" step="10" value={charlesTemp}
-                      onChange={(e) => setCharlesTemp(parseFloat(e.target.value))}
-                      className="w-full h-3 bg-orange-200 rounded-lg appearance-none cursor-pointer"
-                    />
-                    
-                    <div className="mt-5 p-3 bg-white rounded-lg border border-orange-200 text-center flex justify-center items-center gap-4">
-                      <span className="text-gray-600 text-sm">현재 부피(V):</span>
-                      <span className="text-green-600 font-black text-xl">{charlesVolume.toFixed(2)} L</span>
-                    </div>
-                  </div>
-
-                  {/* 시각화 영역 (실린더 OR 탁구공) */}
-                  {charlesMode === 'cylinder' ? (
-                    <div className="relative w-32 h-64 border-4 border-t-0 border-slate-700 rounded-b-lg bg-white mt-16 shadow-inner overflow-visible">
-                      {/* 기체 배경 (온도에 따른 색상 변화) */}
-                      <div 
-                        className="absolute bottom-0 w-full rounded-b-sm transition-all duration-75 ease-linear border-t-2 border-orange-400 z-0"
-                        style={{ 
-                          height: `${(charlesVolume / 20) * 100}%`,
-                          backgroundColor: charlesTemp >= 400 ? '#fee2e2' : charlesTemp <= 200 ? '#e0f2fe' : '#ffedd5'
-                        }}
-                      />
-                      
-                      {/* 실감나는 입자 캔버스 추가 */}
-                      <ParticleCanvas 
-                        containerWidth={120} containerHeight={248} volume={charlesVolume} maxVolume={20} temperature={charlesTemp} 
-                        color={charlesTemp >= 400 ? '#ef4444' : charlesTemp <= 200 ? '#0ea5e9' : '#f97316'} 
-                      />
-                      
-                      {/* 피스톤 (압력 일정) */}
-                      <div 
-                        className="absolute w-full h-4 bg-slate-600 transition-all duration-75 ease-linear z-10 flex justify-center"
-                        style={{ bottom: `${(charlesVolume / 20) * 100}%`, transform: 'translateY(50%)' }}
-                      >
-                        {/* 뚜껑 손잡이 */}
-                        <div className="absolute bottom-4 w-6 h-6 border-4 border-slate-600 rounded-t-full"></div>
+            {/* Content */}
+            <div className="p-6 md:p-8">
+              {/* ================= BOYLE'S LAW ================= */}
+              {activeTab === 'boyle' && (
+                <div className="space-y-8">
+                  <div className="flex flex-col md:flex-row gap-8">
+                    {/* 왼쪽: 컨트롤 및 실린더 */}
+                    <div className="flex-1 flex flex-col items-center">
+                      <div className="w-full bg-blue-50 p-5 rounded-xl border border-blue-100 mb-6 shadow-sm">
+                        <div className="flex justify-between items-center mb-2">
+                          <h2 className="text-lg font-bold text-blue-800">📌 통제 변인: 온도(T) 일정</h2>
+                          <button onClick={resetBoyle} className="text-sm px-3 py-1 bg-white border border-blue-300 text-blue-600 rounded-md hover:bg-blue-100">초기화</button>
+                        </div>
                         
-                        {/* 1기압 표시 라벨 */}
-                        <div className="absolute bottom-full mb-6 bg-slate-800 px-3 py-1 rounded text-[10px] text-white font-bold border border-slate-900 whitespace-nowrap">
-                          1 기압 (일정)
+                        {/* 모드 선택 토글 */}
+                        <div className="flex bg-blue-200/50 p-1 rounded-lg mb-4">
+                          <button 
+                            onClick={() => setBoyleMode('cylinder')}
+                            className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-colors ${boyleMode === 'cylinder' ? 'bg-white text-blue-600 shadow-sm' : 'text-blue-700/60 hover:text-blue-700'}`}
+                          >
+                            기본 실린더 모형
+                          </button>
+                          <button 
+                            onClick={() => setBoyleMode('marshmallow')}
+                            className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-colors ${boyleMode === 'marshmallow' ? 'bg-white text-blue-600 shadow-sm' : 'text-blue-700/60 hover:text-blue-700'}`}
+                          >
+                            🍡 주사기 마시멜로
+                          </button>
+                        </div>
+
+                        <div className="bg-white p-3 rounded-lg border border-blue-200 text-sm text-blue-700 mb-4 font-bold shadow-sm">
+                          {boyleMode === 'cylinder' 
+                            ? "💡 원리: 기체의 부피가 감소하면 입자의 단위 넓이당 충돌 횟수가 증가하여 압력이 높아집니다."
+                            : "💡 생활 속 원리: 끝을 막은 주사기를 누르면(부피 감소→압력 증가) 마시멜로가 쪼그라들고, 당기면(부피 증가→압력 감소) 빵빵하게 부풀어 오릅니다."}
+                        </div>
+                        
+                        <label className="block text-sm font-medium text-gray-700 mt-4 mb-2">
+                          주사기 부피(V) 조절: <span className="text-blue-600 font-bold text-lg">{boyleVolume.toFixed(1)} L</span>
+                        </label>
+                        <input
+                          type="range" min="2" max="20" step="0.1" value={boyleVolume}
+                          onChange={(e) => setBoyleVolume(parseFloat(e.target.value))}
+                          className="w-full h-3 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                        
+                        <div className="mt-5 p-3 bg-white rounded-lg border border-blue-200 text-center flex justify-center items-center gap-4">
+                          <span className="text-gray-600 text-sm">내부 압력(P):</span>
+                          <span className="text-red-500 font-black text-xl">{boylePressure.toFixed(2)} 기압</span>
+                        </div>
+                      </div>
+
+                      {/* 시각화 영역 (실린더 OR 마시멜로) */}
+                      {boyleMode === 'cylinder' ? (
+                        <div className="relative w-32 h-64 border-4 border-t-0 border-slate-700 rounded-b-lg bg-white mt-16 shadow-inner overflow-visible">
+                          {/* 가스 영역 */}
+                          <div 
+                            className="absolute bottom-0 w-full bg-blue-50 rounded-b-sm transition-all duration-75 ease-linear border-t-2 border-blue-400 z-0"
+                            style={{ height: `${(boyleVolume / 20) * 100}%` }}
+                          />
+                          
+                          {/* 실감나는 입자 캔버스 추가 */}
+                          <ParticleCanvas containerWidth={120} containerHeight={248} volume={boyleVolume} maxVolume={20} temperature={300} color="#3b82f6" />
+                          
+                          {/* 피스톤 */}
+                          <div 
+                            className="absolute w-full h-4 bg-slate-600 transition-all duration-75 ease-linear z-10 flex justify-center"
+                            style={{ bottom: `${(boyleVolume / 20) * 100}%`, transform: 'translateY(50%)' }}
+                          >
+                            {/* 뚜렷한 피스톤 기둥 추가 */}
+                            <div className="absolute bottom-0 w-4 h-48 bg-slate-300 border-x-2 border-t-2 border-slate-400 rounded-t-sm z-0"></div>
+
+                            {/* 압력 추 시각화 (진짜 '추' 모양으로 강조) */}
+                            <div 
+                              className="absolute bottom-full mb-0 bg-zinc-700 transition-all duration-75 ease-linear flex flex-col items-center justify-center text-white text-[12px] font-bold rounded-t-md border-2 border-zinc-800 z-20 shadow-lg"
+                              style={{ width: '75%', height: `${Math.max(30, boylePressure * 25)}px` }}
+                            >
+                              <span className="text-zinc-300 text-[10px]">
+                                {boylePressure < 2 ? '가벼운 추' : boylePressure < 5 ? '무거운 추' : '매우 무거운 추'}
+                              </span>
+                              <span>{boylePressure.toFixed(1)} 기압</span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative w-32 h-64 border-4 border-t-0 border-slate-300 rounded-b-md bg-white/50 mt-16 shadow-inner flex flex-col items-center justify-end overflow-visible">
+                          {/* 눈금선 시각화 */}
+                          <div className="absolute left-0 top-0 h-full w-4 border-r border-slate-200 flex flex-col justify-between py-4 z-0">
+                             {[...Array(8)].map((_, i) => <div key={i} className="w-2 h-[2px] bg-slate-300"></div>)}
+                          </div>
+                          
+                          {/* 누르는 피스톤 (위에서 아래로 길게 내려옴) */}
+                          <div 
+                            className="absolute w-full bg-slate-700 transition-all duration-75 ease-linear z-20 flex justify-center border-b-4 border-slate-800 opacity-90"
+                            style={{ height: '300px', bottom: `${(boyleVolume / 20) * 100}%` }}
+                          >
+                             {/* 피스톤 기둥 */}
+                             <div className="w-4 h-full bg-slate-400"></div>
+                          </div>
+                          
+                          {/* 막힌 주사기 입구 */}
+                          <div className="absolute -bottom-2 w-8 h-4 bg-slate-800 rounded-full z-30"></div>
+
+                          {/* 핑크색 마시멜로 SVG */}
+                          <div 
+                            className="absolute z-10 transition-all duration-75 origin-bottom flex flex-col items-center" 
+                            style={{ bottom: '10%', transform: `scale(${boyleVolume / 10})` }}
+                          >
+                            <svg width="60" height="60" viewBox="0 0 100 100" className="drop-shadow-md">
+                               <rect x="20" y="20" width="60" height="60" rx="20" fill="#fbcfe8" stroke="#f472b6" strokeWidth="4"/>
+                               
+                               {/* 부피에 따른 귀여운 표정 변화 */}
+                               {boyleVolume < 6 ? ( // 압력이 셀 때 (쪼그라듦)
+                                 <>
+                                   <path d="M 35 45 L 45 55 M 45 45 L 35 55" stroke="#be185d" strokeWidth="4" strokeLinecap="round"/>
+                                   <path d="M 55 45 L 65 55 M 65 45 L 55 55" stroke="#be185d" strokeWidth="4" strokeLinecap="round"/>
+                                   <path d="M 45 70 Q 50 60 55 70" fill="none" stroke="#be185d" strokeWidth="4" strokeLinecap="round"/>
+                                 </>
+                               ) : boyleVolume > 15 ? ( // 압력이 약할 때 (빵빵해짐)
+                                 <>
+                                   <circle cx="40" cy="45" r="5" fill="#be185d"/>
+                                   <circle cx="60" cy="45" r="5" fill="#be185d"/>
+                                   <ellipse cx="50" cy="65" rx="8" ry="12" fill="#be185d"/>
+                                 </>
+                               ) : ( // 평상시
+                                 <>
+                                   <circle cx="40" cy="45" r="4" fill="#be185d"/>
+                                   <circle cx="60" cy="45" r="4" fill="#be185d"/>
+                                   <path d="M 45 65 Q 50 72 55 65" fill="none" stroke="#be185d" strokeWidth="4" strokeLinecap="round"/>
+                                 </>
+                               )}
+                            </svg>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 오른쪽: 그래프 */}
+                    <div className="flex-1 w-full bg-white p-5 border border-gray-200 rounded-xl shadow-sm flex flex-col mt-4 md:mt-0">
+                      <h3 className="text-center font-bold text-gray-700 mb-4">P-V 그래프 (압력과 부피의 반비례 관계)</h3>
+                      <div className="relative w-full aspect-[4/3] bg-slate-50 border-l-2 border-b-2 border-slate-700 flex-1">
+                        <svg viewBox="0 0 300 200" className="w-full h-full overflow-visible">
+                          {[1, 2, 3, 4].map(i => <line key={`h${i}`} x1="0" y1={i*50} x2="300" y2={i*50} stroke="#e2e8f0" strokeWidth="1" />)}
+                          {[1, 2, 3, 4, 5].map(i => <line key={`v${i}`} x1={i*50} y1="0" x2={i*50} y2="200" stroke="#e2e8f0" strokeWidth="1" />)}
+                          
+                          {/* 반비례 곡선 */}
+                          <path d={boylePath} fill="none" stroke="#3b82f6" strokeWidth="3" opacity="0.4" />
+                          
+                          {/* 현재 위치 점 */}
+                          <circle 
+                            cx={(boyleVolume / 20) * 300} cy={200 - (boylePressure / 10) * 200} 
+                            r="7" fill="#ef4444" stroke="white" strokeWidth="2"
+                            className="transition-all duration-75"
+                          />
+                        </svg>
+                        
+                        {/* 축 라벨 */}
+                        <div className="absolute -left-8 top-0 bottom-0 flex flex-col justify-between text-xs text-gray-500 py-1">
+                          <span>10</span><span>5</span><span>0</span>
+                        </div>
+                        <div className="absolute left-0 right-0 -bottom-6 flex justify-between text-xs text-gray-500 px-1">
+                          <span>0</span><span>10</span><span>20</span>
+                        </div>
+                        <div className="absolute -left-12 top-1/2 -rotate-90 text-sm font-bold text-slate-600">압력 (P)</div>
+                        <div className="absolute left-1/2 -bottom-10 -translate-x-1/2 text-sm font-bold text-slate-600">부피 (V)</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 하단: 데이터 기록 표 및 수식 */}
+                  <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                    <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                      <div className="bg-blue-50 px-4 py-2 rounded-lg font-mono text-lg text-blue-800 border border-blue-200">
+                        압력 × 부피 = <span className="font-bold">{(boylePressure * boyleVolume).toFixed(1)}</span> (일정)
+                      </div>
+                      <button 
+                        onClick={recordBoyleData}
+                        disabled={boyleRecords.length >= 5}
+                        className="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg shadow hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                      >
+                        + 현재 데이터 기록하기
+                      </button>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-center border-collapse">
+                        <thead>
+                          <tr className="bg-slate-100 text-slate-700">
+                            <th className="p-3 border">실험 횟수</th>
+                            <th className="p-3 border">압력 (P)</th>
+                            <th className="p-3 border">부피 (V)</th>
+                            <th className="p-3 border bg-blue-100">압력 × 부피 (상수 k)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {boyleRecords.length === 0 ? (
+                            <tr><td colSpan="4" className="p-4 text-gray-400">데이터 기록하기 버튼을 눌러보세요. (최대 5개)</td></tr>
+                          ) : (
+                            boyleRecords.map((data, idx) => (
+                              <tr key={idx} className="hover:bg-gray-50">
+                                <td className="p-2 border font-bold">{idx + 1}</td>
+                                <td className="p-2 border">{data.p.toFixed(2)} 기압</td>
+                                <td className="p-2 border">{data.v.toFixed(1)} L</td>
+                                <td className="p-2 border bg-blue-50 font-bold text-blue-600">{data.k.toFixed(1)}</td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* 보일의 법칙 과학 원리 정리 */}
+                  <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-5 shadow-sm mt-4">
+                    <h3 className="text-lg font-bold text-indigo-900 mb-3">📝 핵심 과학 원리 정리 (보일의 법칙)</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-indigo-800 leading-relaxed text-sm mb-2">
+                          <span className="font-bold">✔ 정의:</span> 온도가 일정할 때, 일정량의 기체의 부피는 압력에 <strong className="text-red-600 bg-red-100 px-1 rounded">반비례</strong>합니다.
+                        </p>
+                        <p className="text-indigo-800 leading-relaxed text-sm">
+                          <span className="font-bold">✔ 입자 모형의 원리:</span> 외부에서 압력을 가해 부피를 줄이면 공간이 좁아집니다. 기체 입자들이 벽에 부딪히는 <strong>충돌 횟수가 증가</strong>하여 내부 압력이 커집니다.
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-center bg-white rounded-lg p-3 border border-indigo-200">
+                        <div className="text-center">
+                          <span className="block text-xs text-gray-500 mb-1">공식</span>
+                          <span className="text-xl font-black text-indigo-700">P × V = 일정</span>
+                          <span className="block text-xs text-gray-500 mt-1">(압력 × 부피 = 상수)</span>
                         </div>
                       </div>
                     </div>
-                  ) : (
-                    <div className="relative w-48 h-64 border-4 border-t-0 border-slate-300 rounded-b-2xl bg-white mt-16 overflow-hidden shadow-inner flex flex-col justify-end">
-                      {/* 물 (비커) */}
-                      <div 
-                        className="absolute bottom-0 w-full transition-colors duration-300"
-                        style={{ 
-                          height: '75%',
-                          backgroundColor: charlesTemp >= 400 ? 'rgba(239, 68, 68, 0.3)' : charlesTemp <= 200 ? 'rgba(14, 165, 233, 0.3)' : 'rgba(56, 189, 248, 0.15)'
-                        }}
-                      >
-                        {/* 물결 라인 */}
-                        <div className="w-full h-2 bg-white/20 absolute top-0"></div>
-                        {/* 끓는 물 기포 효과 */}
-                        {charlesTemp >= 450 && (
-                          <div className="absolute w-full h-full opacity-60">
-                            <div className="absolute bottom-0 left-4 w-3 h-3 bg-white/50 rounded-full animate-[ping_1s_infinite]"></div>
-                            <div className="absolute bottom-0 left-20 w-4 h-4 bg-white/50 rounded-full animate-[ping_1.5s_infinite_0.2s]"></div>
-                            <div className="absolute bottom-0 right-8 w-2 h-2 bg-white/50 rounded-full animate-[ping_0.8s_infinite_0.5s]"></div>
+                  </div>
+
+                </div>
+              )}
+
+              {/* ================= CHARLES'S LAW ================= */}
+              {activeTab === 'charles' && (
+                <div className="space-y-8">
+                  <div className="flex flex-col md:flex-row gap-8">
+                    {/* 왼쪽: 컨트롤 및 실린더 */}
+                    <div className="flex-1 flex flex-col items-center">
+                      <div className="w-full bg-orange-50 p-5 rounded-xl border border-orange-100 mb-6 shadow-sm">
+                         <div className="flex justify-between items-center mb-2">
+                          <h2 className="text-lg font-bold text-orange-800">📌 통제 변인: 압력(P) 일정</h2>
+                          <button onClick={resetCharles} className="text-sm px-3 py-1 bg-white border border-orange-300 text-orange-600 rounded-md hover:bg-orange-100">초기화</button>
+                        </div>
+                        
+                        {/* 모드 선택 토글 */}
+                        <div className="flex bg-orange-200/50 p-1 rounded-lg mb-4">
+                          <button 
+                            onClick={() => setCharlesMode('cylinder')}
+                            className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-colors ${charlesMode === 'cylinder' ? 'bg-white text-orange-600 shadow-sm' : 'text-orange-700/60 hover:text-orange-700'}`}
+                          >
+                            기본 실린더 모형
+                          </button>
+                          <button 
+                            onClick={() => setCharlesMode('pingpong')}
+                            className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-colors ${charlesMode === 'pingpong' ? 'bg-white text-orange-600 shadow-sm' : 'text-orange-700/60 hover:text-orange-700'}`}
+                          >
+                            🏓 탁구공 실험
+                          </button>
+                        </div>
+
+                        <div className="bg-white p-3 rounded-lg border border-orange-200 text-sm text-orange-700 mb-4 font-bold shadow-sm">
+                          {charlesMode === 'cylinder' 
+                            ? "💡 원리: 온도가 높아지면 기체 입자의 운동이 활발해져 부피가 팽창합니다."
+                            : "💡 생활 속 원리: 찌그러진 탁구공을 뜨거운 물에 넣으면, 탁구공 안의 기체 온도가 올라가면서 부피가 팽창하여 원래대로 둥글게 펴집니다."}
+                        </div>
+                        
+                        <label className="block text-sm font-medium text-gray-700 mt-4 mb-2">
+                          절대온도(T) 조절: <span className="text-orange-600 font-bold text-lg">{charlesTemp.toFixed(0)} K</span>
+                        </label>
+                        <input
+                          type="range" min="100" max="600" step="10" value={charlesTemp}
+                          onChange={(e) => setCharlesTemp(parseFloat(e.target.value))}
+                          className="w-full h-3 bg-orange-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                        
+                        <div className="mt-5 p-3 bg-white rounded-lg border border-orange-200 text-center flex justify-center items-center gap-4">
+                          <span className="text-gray-600 text-sm">현재 부피(V):</span>
+                          <span className="text-green-600 font-black text-xl">{charlesVolume.toFixed(2)} L</span>
+                        </div>
+                      </div>
+
+                      {/* 시각화 영역 (실린더 OR 탁구공) */}
+                      {charlesMode === 'cylinder' ? (
+                        <div className="relative w-32 h-64 border-4 border-t-0 border-slate-700 rounded-b-lg bg-white mt-16 shadow-inner overflow-visible">
+                          {/* 기체 배경 (온도에 따른 색상 변화) */}
+                          <div 
+                            className="absolute bottom-0 w-full rounded-b-sm transition-all duration-75 ease-linear border-t-2 border-orange-400 z-0"
+                            style={{ 
+                              height: `${(charlesVolume / 20) * 100}%`,
+                              backgroundColor: charlesTemp >= 400 ? '#fee2e2' : charlesTemp <= 200 ? '#e0f2fe' : '#ffedd5'
+                            }}
+                          />
+                          
+                          {/* 실감나는 입자 캔버스 추가 */}
+                          <ParticleCanvas 
+                            containerWidth={120} containerHeight={248} volume={charlesVolume} maxVolume={20} temperature={charlesTemp} 
+                            color={charlesTemp >= 400 ? '#ef4444' : charlesTemp <= 200 ? '#0ea5e9' : '#f97316'} 
+                          />
+                          
+                          {/* 피스톤 (압력 일정) */}
+                          <div 
+                            className="absolute w-full h-4 bg-slate-600 transition-all duration-75 ease-linear z-10 flex justify-center"
+                            style={{ bottom: `${(charlesVolume / 20) * 100}%`, transform: 'translateY(50%)' }}
+                          >
+                            {/* 뚜껑 손잡이 */}
+                            <div className="absolute bottom-4 w-6 h-6 border-4 border-slate-600 rounded-t-full"></div>
+                            
+                            {/* 1기압 표시 라벨 */}
+                            <div className="absolute bottom-full mb-6 bg-slate-800 px-3 py-1 rounded text-[10px] text-white font-bold border border-slate-900 whitespace-nowrap">
+                              1 기압 (일정)
+                            </div>
                           </div>
-                        )}
-                      </div>
-                      
-                      {/* 탁구공 SVG (온도에 따라 찌그러짐 정도가 바뀜) */}
-                      <div className="absolute w-full flex justify-center z-10 transition-all duration-500" style={{ bottom: charlesTemp >= 400 ? '55%' : '50%' }}>
-                        <svg width="100" height="100" viewBox="0 0 120 120" className="drop-shadow-lg">
-                          {(() => {
-                              // 온도가 400K 이상이면 dent(찌그러짐) = 0, 동그란 공 유지
-                              // 온도가 낮아질수록 dent 값이 커짐 (최대 약 37.5)
-                              const dent = Math.max(0, 400 - charlesTemp) / 8; 
-                              const topY = 20 + dent;
-                              const ctrlY = 38 + dent * 0.3;
-                              const bottomArc = "M 20 60 A 40 40 0 0 0 100 60"; // 아랫면 반원
-                              const topCurve = `C 100 ${ctrlY}, 82 ${topY}, 60 ${topY} C 38 ${topY}, 20 ${ctrlY}, 20 60`; // 윗면 (찌그러지는 부분)
-                              
-                              return (
-                                  <>
-                                      <path d={`${bottomArc} ${topCurve} Z`} fill="#fdba74" stroke="#ea580c" strokeWidth="3" className="transition-all duration-300" />
-                                      <text x="60" y={60 + dent*0.3} textAnchor="middle" fill="#c2410c" fontSize="16" fontWeight="900" className="transition-all duration-300">탁구공</text>
-                                  </>
-                              );
-                          })()}
-                        </svg>
-                      </div>
-                    </div>
-                  )}
-              
-                  {/* 가열/냉각 상태 표시 (버너 시각화) */}
-                  <div className="mt-4 flex flex-col items-center">
-                    <div className="text-4xl transition-transform duration-300 transform origin-bottom" style={{ transform: `scale(${charlesTemp / 300})` }}>
-                      {charlesTemp >= 400 ? '🔥' : charlesTemp <= 200 ? '🧊' : '🕯️'}
-                    </div>
-                    <div className="mt-1 text-center text-sm font-bold">
-                      {charlesTemp >= 400 ? <span className="text-red-500">가열 중 (운동 활발)</span> : 
-                       charlesTemp <= 200 ? <span className="text-blue-500">냉각 중 (운동 둔화)</span> : 
-                       <span className="text-orange-500">온도 유지</span>}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 오른쪽: 그래프 */}
-                <div className="flex-1 w-full bg-white p-5 border border-gray-200 rounded-xl shadow-sm flex flex-col mt-4 md:mt-0">
-                  <h3 className="text-center font-bold text-gray-700 mb-4">V-T 그래프 (부피와 온도의 비례 관계)</h3>
-                  <div className="relative w-full aspect-[4/3] bg-slate-50 border-l-2 border-b-2 border-slate-700 flex-1">
-                    <svg viewBox="0 0 300 200" className="w-full h-full overflow-visible">
-                      {[1, 2, 3, 4].map(i => <line key={`h${i}`} x1="0" y1={i*50} x2="300" y2={i*50} stroke="#e2e8f0" strokeWidth="1" />)}
-                      {[1, 2, 3, 4, 5].map(i => <line key={`v${i}`} x1={i*50} y1="0" x2={i*50} y2="200" stroke="#e2e8f0" strokeWidth="1" />)}
-                      
-                      {/* 비례 직선 */}
-                      <line x1="0" y1="200" x2="300" y2="0" stroke="#f97316" strokeWidth="3" opacity="0.4" />
-                      
-                      {/* 현재 위치 점 */}
-                      <circle 
-                        cx={(charlesTemp / 600) * 300} cy={200 - (charlesVolume / 20) * 200} 
-                        r="7" fill="#22c55e" stroke="white" strokeWidth="2"
-                        className="transition-all duration-75"
-                      />
-                    </svg>
-                    
-                    {/* 축 라벨 */}
-                    <div className="absolute -left-8 top-0 bottom-0 flex flex-col justify-between text-xs text-gray-500 py-1">
-                      <span>20</span><span>10</span><span>0</span>
-                    </div>
-                    <div className="absolute left-0 right-0 -bottom-6 flex justify-between text-xs text-gray-500 px-1">
-                      <span>0</span><span>300</span><span>600</span>
-                    </div>
-                    <div className="absolute -left-12 top-1/2 -rotate-90 text-sm font-bold text-slate-600">부피 (V)</div>
-                    <div className="absolute left-1/2 -bottom-10 -translate-x-1/2 text-sm font-bold text-slate-600">온도 (T)</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 하단: 데이터 기록 표 및 수식 */}
-              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-                <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                  <div className="bg-orange-50 px-4 py-2 rounded-lg font-mono text-lg text-orange-800 border border-orange-200">
-                    부피 ÷ 온도 = <span className="font-bold">{(charlesVolume / charlesTemp).toFixed(4)}</span> (일정)
-                  </div>
-                  <button 
-                    onClick={recordCharlesData}
-                    disabled={charlesRecords.length >= 5}
-                    className="px-6 py-2 bg-orange-500 text-white font-bold rounded-lg shadow hover:bg-orange-600 disabled:opacity-50 transition-colors"
-                  >
-                    + 현재 데이터 기록하기
-                  </button>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-center border-collapse">
-                    <thead>
-                      <tr className="bg-slate-100 text-slate-700">
-                        <th className="p-3 border">실험 횟수</th>
-                        <th className="p-3 border">온도 (T)</th>
-                        <th className="p-3 border">부피 (V)</th>
-                        <th className="p-3 border bg-orange-100">부피 ÷ 온도 (상수 k)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {charlesRecords.length === 0 ? (
-                        <tr><td colSpan="4" className="p-4 text-gray-400">데이터 기록하기 버튼을 눌러보세요. (최대 5개)</td></tr>
+                        </div>
                       ) : (
-                        charlesRecords.map((data, idx) => (
-                          <tr key={idx} className="hover:bg-gray-50">
-                            <td className="p-2 border font-bold">{idx + 1}</td>
-                            <td className="p-2 border">{data.t.toFixed(0)} K</td>
-                            <td className="p-2 border">{data.v.toFixed(2)} L</td>
-                            <td className="p-2 border bg-orange-50 font-bold text-orange-600">{(data.k).toFixed(4)}</td>
-                          </tr>
-                        ))
+                        <div className="relative w-48 h-64 border-4 border-t-0 border-slate-300 rounded-b-2xl bg-white mt-16 overflow-hidden shadow-inner flex flex-col justify-end">
+                          {/* 물 (비커) */}
+                          <div 
+                            className="absolute bottom-0 w-full transition-colors duration-300"
+                            style={{ 
+                              height: '75%',
+                              backgroundColor: charlesTemp >= 400 ? 'rgba(239, 68, 68, 0.3)' : charlesTemp <= 200 ? 'rgba(14, 165, 233, 0.3)' : 'rgba(56, 189, 248, 0.15)'
+                            }}
+                          >
+                            {/* 물결 라인 */}
+                            <div className="w-full h-2 bg-white/20 absolute top-0"></div>
+                            {/* 끓는 물 기포 효과 */}
+                            {charlesTemp >= 450 && (
+                              <div className="absolute w-full h-full opacity-60">
+                                <div className="absolute bottom-0 left-4 w-3 h-3 bg-white/50 rounded-full animate-[ping_1s_infinite]"></div>
+                                <div className="absolute bottom-0 left-20 w-4 h-4 bg-white/50 rounded-full animate-[ping_1.5s_infinite_0.2s]"></div>
+                                <div className="absolute bottom-0 right-8 w-2 h-2 bg-white/50 rounded-full animate-[ping_0.8s_infinite_0.5s]"></div>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* 탁구공 SVG (온도에 따라 찌그러짐 정도가 바뀜) */}
+                          <div className="absolute w-full flex justify-center z-10 transition-all duration-500" style={{ bottom: charlesTemp >= 400 ? '55%' : '50%' }}>
+                            <svg width="100" height="100" viewBox="0 0 120 120" className="drop-shadow-lg">
+                              {(() => {
+                                  // 온도가 400K 이상이면 dent(찌그러짐) = 0, 동그란 공 유지
+                                  // 온도가 낮아질수록 dent 값이 커짐 (최대 약 37.5)
+                                  const dent = Math.max(0, 400 - charlesTemp) / 8; 
+                                  const topY = 20 + dent;
+                                  const ctrlY = 38 + dent * 0.3;
+                                  const bottomArc = "M 20 60 A 40 40 0 0 0 100 60"; // 아랫면 반원
+                                  const topCurve = `C 100 ${ctrlY}, 82 ${topY}, 60 ${topY} C 38 ${topY}, 20 ${ctrlY}, 20 60`; // 윗면 (찌그러지는 부분)
+                                  
+                                  return (
+                                      <>
+                                          <path d={`${bottomArc} ${topCurve} Z`} fill="#fdba74" stroke="#ea580c" strokeWidth="3" className="transition-all duration-300" />
+                                          <text x="60" y={60 + dent*0.3} textAnchor="middle" fill="#c2410c" fontSize="16" fontWeight="900" className="transition-all duration-300">탁구공</text>
+                                      </>
+                                  );
+                              })()}
+                            </svg>
+                          </div>
+                        </div>
                       )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                  
+                      {/* 가열/냉각 상태 표시 (버너 시각화) */}
+                      <div className="mt-4 flex flex-col items-center">
+                        <div className="text-4xl transition-transform duration-300 transform origin-bottom" style={{ transform: `scale(${charlesTemp / 300})` }}>
+                          {charlesTemp >= 400 ? '🔥' : charlesTemp <= 200 ? '🧊' : '🕯️'}
+                        </div>
+                        <div className="mt-1 text-center text-sm font-bold">
+                          {charlesTemp >= 400 ? <span className="text-red-500">가열 중 (운동 활발)</span> : 
+                           charlesTemp <= 200 ? <span className="text-blue-500">냉각 중 (운동 둔화)</span> : 
+                           <span className="text-orange-500">온도 유지</span>}
+                        </div>
+                      </div>
+                    </div>
 
-              {/* 샤를의 법칙 과학 원리 정리 */}
-              <div className="bg-rose-50 border border-rose-100 rounded-xl p-5 shadow-sm mt-4">
-                <h3 className="text-lg font-bold text-rose-900 mb-3">📝 핵심 과학 원리 정리 (샤를의 법칙)</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-rose-800 leading-relaxed text-sm mb-2">
-                      <span className="font-bold">✔ 정의:</span> 압력이 일정할 때, 일정량의 기체의 부피는 절대온도에 <strong className="text-green-600 bg-green-100 px-1 rounded">비례</strong>합니다.
-                    </p>
-                    <p className="text-rose-800 leading-relaxed text-sm">
-                      <span className="font-bold">✔ 입자 모형의 원리:</span> 온도를 높이면 기체 입자의 <strong>운동이 활발</strong>해집니다. 입자들이 용기 벽을 더 세게, 더 자주 밀어내므로 부피가 팽창합니다.
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-center bg-white rounded-lg p-3 border border-rose-200">
-                    <div className="text-center">
-                      <span className="block text-xs text-gray-500 mb-1">공식</span>
-                      <span className="text-xl font-black text-rose-700">V ÷ T = 일정</span>
-                      <span className="block text-xs text-gray-500 mt-1">(부피 ÷ 절대온도 = 상수)</span>
+                    {/* 오른쪽: 그래프 */}
+                    <div className="flex-1 w-full bg-white p-5 border border-gray-200 rounded-xl shadow-sm flex flex-col mt-4 md:mt-0">
+                      <h3 className="text-center font-bold text-gray-700 mb-4">V-T 그래프 (부피와 온도의 비례 관계)</h3>
+                      <div className="relative w-full aspect-[4/3] bg-slate-50 border-l-2 border-b-2 border-slate-700 flex-1">
+                        <svg viewBox="0 0 300 200" className="w-full h-full overflow-visible">
+                          {[1, 2, 3, 4].map(i => <line key={`h${i}`} x1="0" y1={i*50} x2="300" y2={i*50} stroke="#e2e8f0" strokeWidth="1" />)}
+                          {[1, 2, 3, 4, 5].map(i => <line key={`v${i}`} x1={i*50} y1="0" x2={i*50} y2="200" stroke="#e2e8f0" strokeWidth="1" />)}
+                          
+                          {/* 비례 직선 */}
+                          <line x1="0" y1="200" x2="300" y2="0" stroke="#f97316" strokeWidth="3" opacity="0.4" />
+                          
+                          {/* 현재 위치 점 */}
+                          <circle 
+                            cx={(charlesTemp / 600) * 300} cy={200 - (charlesVolume / 20) * 200} 
+                            r="7" fill="#22c55e" stroke="white" strokeWidth="2"
+                            className="transition-all duration-75"
+                          />
+                        </svg>
+                        
+                        {/* 축 라벨 */}
+                        <div className="absolute -left-8 top-0 bottom-0 flex flex-col justify-between text-xs text-gray-500 py-1">
+                          <span>20</span><span>10</span><span>0</span>
+                        </div>
+                        <div className="absolute left-0 right-0 -bottom-6 flex justify-between text-xs text-gray-500 px-1">
+                          <span>0</span><span>300</span><span>600</span>
+                        </div>
+                        <div className="absolute -left-12 top-1/2 -rotate-90 text-sm font-bold text-slate-600">부피 (V)</div>
+                        <div className="absolute left-1/2 -bottom-10 -translate-x-1/2 text-sm font-bold text-slate-600">온도 (T)</div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
 
+                  {/* 하단: 데이터 기록 표 및 수식 */}
+                  <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                    <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                      <div className="bg-orange-50 px-4 py-2 rounded-lg font-mono text-lg text-orange-800 border border-orange-200">
+                        부피 ÷ 온도 = <span className="font-bold">{(charlesVolume / charlesTemp).toFixed(4)}</span> (일정)
+                      </div>
+                      <button 
+                        onClick={recordCharlesData}
+                        disabled={charlesRecords.length >= 5}
+                        className="px-6 py-2 bg-orange-500 text-white font-bold rounded-lg shadow hover:bg-orange-600 disabled:opacity-50 transition-colors"
+                      >
+                        + 현재 데이터 기록하기
+                      </button>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-center border-collapse">
+                        <thead>
+                          <tr className="bg-slate-100 text-slate-700">
+                            <th className="p-3 border">실험 횟수</th>
+                            <th className="p-3 border">온도 (T)</th>
+                            <th className="p-3 border">부피 (V)</th>
+                            <th className="p-3 border bg-orange-100">부피 ÷ 온도 (상수 k)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {charlesRecords.length === 0 ? (
+                            <tr><td colSpan="4" className="p-4 text-gray-400">데이터 기록하기 버튼을 눌러보세요. (최대 5개)</td></tr>
+                          ) : (
+                            charlesRecords.map((data, idx) => (
+                              <tr key={idx} className="hover:bg-gray-50">
+                                <td className="p-2 border font-bold">{idx + 1}</td>
+                                <td className="p-2 border">{data.t.toFixed(0)} K</td>
+                                <td className="p-2 border">{data.v.toFixed(2)} L</td>
+                                <td className="p-2 border bg-orange-50 font-bold text-orange-600">{data.k.toFixed(4)}</td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* 샤를의 법칙 과학 원리 정리 */}
+                  <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-5 shadow-sm mt-4">
+                    <h3 className="text-lg font-bold text-indigo-900 mb-3">📝 핵심 과학 원리 정리 (샤를의 법칙)</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-indigo-800 leading-relaxed text-sm mb-2">
+                          <span className="font-bold">✔ 정의:</span> 압력이 일정할 때, 일정량의 기체의 부피는 절대온도에 <strong className="text-orange-600 bg-orange-100 px-1 rounded">비례</strong>합니다.
+                        </p>
+                        <p className="text-indigo-800 leading-relaxed text-sm">
+                          <span className="font-bold">✔ 입자 모형의 원리:</span> 온도가 높아지면 기체 입자의 <strong>운동이 활발</strong>해져 벽면에 충돌하는 힘이 세집니다. 압력을 일정하게 유지하려면 부피가 늘어나야 합니다.
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-center bg-white rounded-lg p-3 border border-indigo-200">
+                        <div className="text-center">
+                          <span className="block text-xs text-gray-500 mb-1">공식</span>
+                          <span className="text-xl font-black text-indigo-700">V / T = 일정</span>
+                          <span className="block text-xs text-gray-500 mt-1">(부피 ÷ 절대온도 = 상수)</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
-      </div>
-    </div>
-  );
-}
+      );
+    }
+
+    // React 18 렌더링 방식
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
